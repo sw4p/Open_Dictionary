@@ -1,3 +1,5 @@
+from picamera import PiCamera
+from picamera.array import PiRGBArray
 import cv2
 import numpy as np
 import pytesseract
@@ -5,23 +7,28 @@ from googletrans import Translator
 from PyDictionary import PyDictionary
 import re
 
+camera = PiCamera()
 dictionary = PyDictionary()
-translator = Translator()
+#translator = Translator()
 
 # This is where tesseract is installed in my system, and yes I am using windows!
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def main():
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    #cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    camera.resolution = (640, 480)
+    camera.framerate = 30
+    rawCapture = PiRGBArray(camera, size=(640, 480))
     # Box of interest coordinates
     x1 = 100
     y1 = 100
     w = 100
     h = 50
 
-    while(True):
+    for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         # Capture image frame
-        ret, frame = cap.read()
+        #ret, frame = cap.read()
+        frame = frame.array
         
         # Identify maker position from the image
         cX, cY = Idenfity_Marker(frame, displayMask=True)
@@ -53,11 +60,12 @@ def main():
         # Display image
         cv2.imshow('frame', frame)
         #cv2.imshow('frame1', translateFrame)
+        rawCapture.truncate(0)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     # Release camera and destroy everything
-    cap.release()
+    #cap.release()
     cv2.destroyAllWindows()
 
 def Idenfity_Marker(image, displayMask=False):
