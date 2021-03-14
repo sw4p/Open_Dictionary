@@ -23,8 +23,8 @@ def main():
         camera = PiCamera()
         camera.resolution = (640, 480)
         camera.framerate = 30
-        camera.hflip = 1
-        camera.vflip = 1
+        camera.vflip = True
+        camera.hflip = True
         rawCapture = PiRGBArray(camera, size=(640, 480))
     else:
         cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
@@ -33,7 +33,7 @@ def main():
     x1 = 100
     y1 = 100
     w = 150
-    h = 50
+    h = 80
 
     #while (True):
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
@@ -45,29 +45,31 @@ def main():
         
         # Identify maker position from the image
         cX, cY = Idenfity_Marker(frame, displayMask=False)
+        cY = cY - 20
         # Draw white dot at the center of the marker
-        cv2.circle(frame, (cX, cY), 5, (255, 255, 255), -1)
+        cv2.circle(frame, (cX, cY), 2, (255, 255, 255), -1)
 
         # Draw a rectange in green color i.e. box of interest around captured image
         #cv2.rectangle(frame, (x1,y1), (x1+w,y1+h), (0,255,0), 2)
         startPoint = (int(cX-w/2), cY-h)
         endPoint = (int(cX+w/2), cY)
-        cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 2)
+        #cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 1)
         # Crop image around box of interest
-        translateFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
+        cropFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
 
         # Detect text as a blob from the image
-        contours = Detect_Text_Blob(translateFrame)
+        contours = Detect_Text_Blob(cropFrame)
         # Find nearest contour to the marker
-        minX, minY, minW, minH = Nearest_Contour(contours, cX, cY)
-        cv2.rectangle(translateFrame, (minX, minY), (minX+minW, minY+minH), (255, 0, 0), 1)
+        minX, minY, minW, minH = Nearest_Contour(cropFrame, contours, cX, cY)
+        cv2.rectangle(cropFrame, (minX, minY), (minX+minW, minY+minH), (0, 0, 255), 1)
+        translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
 
         # Identify text from image
         #data = pytesseract.image_to_string(translationFrame, output_type='dict')
         text = pytesseract.image_to_string(translateFrame)
         #print(text)
         # Replacing every character except english alphabets with ''
-        text = re.sub(r'[^A-Za-z' ']', '', text)
+        text = re.sub(r'[^A-Za-z+]', ' ', text)
 
         if text != '':
             print(text)
@@ -78,7 +80,8 @@ def main():
 
         # Display image
         cv2.imshow('frame', frame)
-        cv2.imshow('frame1', translateFrame)
+        #cv2.imshow('cropFrame', cropFrame)
+        #cv2.imshow('translateFrame', translateFrame)
         if pi == True:
             rawCapture.truncate(0)
         
@@ -131,7 +134,7 @@ def Detect_Text_Blob(image):
 
     # Apply erosion to the image
     erosionKernel = np.ones((3,3), np.uint8)
-    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=1)
+    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=3)
     cv2.imshow('Eroded Image', imgEroded)
 
     # Detect countours in the image
@@ -141,12 +144,13 @@ def Detect_Text_Blob(image):
     
     return contours
 
-def Nearest_Contour(contours, markerX, markerY):
+def Nearest_Contour(image, contours, markerX, markerY):
     minDistance = np.inf
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
+        cv2.rectangle(image, (x,y), (x+w, y+h), (255, 0, 0), 1)
         dist = np.sqrt((markerX-x)**2 + (markerY-y)**2)
-        if dist < minDistance:
+        if dist < minDistance and w >= 50:
             minDistance = dist
             minX, minY, minW, minH = x, y, w, h
     
