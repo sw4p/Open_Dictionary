@@ -58,14 +58,16 @@ def main():
 
         # Detect text as a blob from the image
         contours = Detect_Text_Blob(translateFrame)
-        #print(contours)
+        # Find nearest contour to the marker
+        minX, minY, minW, minH = Nearest_Contour(contours, cX, cY)
+        cv2.rectangle(translateFrame, (minX, minY), (minX+minW, minY+minH), (255, 0, 0), 1)
 
         # Identify text from image
         #data = pytesseract.image_to_string(translationFrame, output_type='dict')
         text = pytesseract.image_to_string(translateFrame)
         #print(text)
         # Replacing every character except english alphabets with ''
-        text = re.sub(r'[^A-Za-z]', '', text)
+        text = re.sub(r'[^A-Za-z' ']', '', text)
 
         if text != '':
             print(text)
@@ -129,17 +131,26 @@ def Detect_Text_Blob(image):
 
     # Apply erosion to the image
     erosionKernel = np.ones((3,3), np.uint8)
-    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=3)
+    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=1)
     cv2.imshow('Eroded Image', imgEroded)
 
     # Detect countours in the image
     contours, hierarchy = cv2.findContours(imgEroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(image, contours, -1, (0,255,0), 1)
-    cv2.imshow('text', image)
+    #cv2.drawContours(image, contours, -1, (0,255,0), 1)
+    #cv2.imshow('text', image)
     
     return contours
 
-
+def Nearest_Contour(contours, markerX, markerY):
+    minDistance = np.inf
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        dist = np.sqrt((markerX-x)**2 + (markerY-y)**2)
+        if dist < minDistance:
+            minDistance = dist
+            minX, minY, minW, minH = x, y, w, h
+    
+    return minX, minY, minW, minH
 
 # Call main function
 main()
