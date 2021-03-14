@@ -50,12 +50,15 @@ def main():
         #cv2.rectangle(frame, (x1,y1), (x1+w,y1+h), (0,255,0), 2)
         startPoint = (int(cX-w/2), cY-h)
         endPoint = (int(cX+w/2), cY)
-
         cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 2)
         # Crop image around box of interest
-        translateFrame = frame[cY-h:cY, int(cX-(w/2)):int(cX+(w/2))]
+        translateFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
 
-        # Detect text from image
+        # Detect text as a blob from the image
+        contours = Detect_Text_Blob(translateFrame)
+        #print(contours)
+
+        # Identify text from image
         #data = pytesseract.image_to_string(translationFrame, output_type='dict')
         text = pytesseract.image_to_string(translateFrame)
         # Replacing every character except english alphabets with ''
@@ -63,8 +66,8 @@ def main():
 
         if text != '':
             print(text)
-            print(dictionary.meaning(text))
-            print(dictionary.synonym(text))
+            #print(dictionary.meaning(text))
+            #print(dictionary.synonym(text))
     
         #print(translator.translate(data).pronunciation)
 
@@ -114,6 +117,26 @@ def Identify_Colour(image, colourBoundry):
     mask = cv2.inRange(image, lower, upper)
     return mask
     
+def Detect_Text_Blob(image):
+    # Change color image into grayscale image
+    imgGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Apply binary threshold
+    imgBinary = cv2.adaptiveThreshold(imgGray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 12)
+    #cv2.imshow('Binary Image', imgBinary)
+
+    # Apply erosion to the image
+    erosionKernel = np.ones((3,3), np.uint8)
+    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=1)
+    #cv2.imshow('Eroded Image', imgEroded)
+
+    # Detect countours in the image
+    contours, hierarchy = cv2.findContours(imgEroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(image, contours, -1, (0,255,0), 3)
+    cv2.imshow('text', image)
+    
+    return contours
+
+
 
 # Call main function
 main()
