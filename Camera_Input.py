@@ -5,7 +5,7 @@ from googletrans import Translator
 from PyDictionary import PyDictionary
 import re
 
-pi = False
+pi = True
 
 if pi == True:
     from picamera import PiCamera
@@ -23,6 +23,8 @@ def main():
         camera = PiCamera()
         camera.resolution = (640, 480)
         camera.framerate = 30
+        camera.hflip = 1
+        camera.vflip = 1
         rawCapture = PiRGBArray(camera, size=(640, 480))
     else:
         cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
@@ -30,11 +32,11 @@ def main():
     # Box of interest coordinates/
     x1 = 100
     y1 = 100
-    w = 100
+    w = 150
     h = 50
 
-    while (True):
-    #for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
+    #while (True):
+    for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
         # Capture image frame
         if pi == True:
             frame = frame.array
@@ -61,6 +63,7 @@ def main():
         # Identify text from image
         #data = pytesseract.image_to_string(translationFrame, output_type='dict')
         text = pytesseract.image_to_string(translateFrame)
+        #print(text)
         # Replacing every character except english alphabets with ''
         text = re.sub(r'[^A-Za-z]', '', text)
 
@@ -126,12 +129,12 @@ def Detect_Text_Blob(image):
 
     # Apply erosion to the image
     erosionKernel = np.ones((3,3), np.uint8)
-    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=1)
-    #cv2.imshow('Eroded Image', imgEroded)
+    imgEroded = cv2.erode(imgBinary, erosionKernel, iterations=3)
+    cv2.imshow('Eroded Image', imgEroded)
 
     # Detect countours in the image
     contours, hierarchy = cv2.findContours(imgEroded, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(image, contours, -1, (0,255,0), 3)
+    cv2.drawContours(image, contours, -1, (0,255,0), 1)
     cv2.imshow('text', image)
     
     return contours
