@@ -44,39 +44,34 @@ def main():
             ret, frame = cap.read()
         
         # Identify maker position from the image
-        cX, cY = Idenfity_Marker(frame, displayMask=False)
-        cY = cY - 20
-        # Draw white dot at the center of the marker
-        cv2.circle(frame, (cX, cY), 2, (255, 255, 255), -1)
+        cX, cY = Idenfity_Marker(frame, [0,-10], displayMask=False)
+        if cX != -1:
+            # Draw white dot at the center of the marker
+            cv2.circle(frame, (cX, cY), 2, (255, 255, 255), -1)
 
-        # Draw a rectange in green color i.e. box of interest around captured image
-        #cv2.rectangle(frame, (x1,y1), (x1+w,y1+h), (0,255,0), 2)
-        startPoint = (int(cX-w/2), cY-h)
-        endPoint = (int(cX+w/2), cY)
-        #cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 1)
-        # Crop image around box of interest
-        cropFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
+            startPoint = (int(cX-w/2), cY-h)
+            endPoint = (int(cX+w/2), cY)
+            cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 1)
+            # Crop image around area of interest
+            cropFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
+            if cropFrame.any():
+                # Detect words in the cropped image
+                contours = Detect_Text_Blob(cropFrame)
+                # Find nearest word to the marker
+                minX, minY, minW, minH = Nearest_Contour(cropFrame, contours, cX, cY)
+                # Bound the nearest word in a red rectangle
+                cv2.rectangle(cropFrame, (minX, minY), (minX+minW, minY+minH), (0, 0, 255), 1)
+                # Identify text from the red rectangle, ideally it should be only one word
+                translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
+                text = pytesseract.image_to_string(translateFrame)
+                # Replacing every character except english alphabets with space
+                text = re.sub(r'[^A-Za-z+]', '', text)
 
-        # Detect text as a blob from the image
-        contours = Detect_Text_Blob(cropFrame)
-        # Find nearest contour to the marker
-        minX, minY, minW, minH = Nearest_Contour(cropFrame, contours, cX, cY)
-        cv2.rectangle(cropFrame, (minX, minY), (minX+minW, minY+minH), (0, 0, 255), 1)
-        translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
-
-        # Identify text from image
-        #data = pytesseract.image_to_string(translationFrame, output_type='dict')
-        text = pytesseract.image_to_string(translateFrame)
-        #print(text)
-        # Replacing every character except english alphabets with ''
-        text = re.sub(r'[^A-Za-z+]', ' ', text)
-
-        if text != '':
-            print(text)
-            #print(dictionary.meaning(text))
-            #print(dictionary.synonym(text))
-    
-        #print(translator.translate(data).pronunciation)
+                if text != '':
+                    print(text)
+                    print(dictionary.meaning(text))
+                    print(dictionary.synonym(text))
+                    #print(translator.translate(data).pronunciation)
 
         # Display image
         cv2.imshow('frame', frame)
@@ -94,7 +89,7 @@ def main():
     
     cv2.destroyAllWindows()
 
-def Idenfity_Marker(image, displayMask=False):
+def Idenfity_Marker(image, offsets=[0,0], displayMask=False):
     # Conver BGR to HSV
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     # Detect red colour. Red colour has two range in HSV, 0-30 and 150-180.
@@ -112,10 +107,10 @@ def Idenfity_Marker(image, displayMask=False):
     # Calculate center of the coloured blob
     M = cv2.moments(mask1)
     if M["m00"] != 0:
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
+        cX = int(M["m10"] / M["m00"]) + offsets[0]
+        cY = int(M["m01"] / M["m00"]) + offsets[1]
     else:
-        cX, cY = 0, 0
+        cX, cY = -1, -1
 
     return cX, cY
 
@@ -153,6 +148,9 @@ def Nearest_Contour(image, contours, markerX, markerY):
         if dist < minDistance and w >= 50:
             minDistance = dist
             minX, minY, minW, minH = x, y, w, h
+    
+    if minDistance == np.inf:
+        minX, minY, minW, minH = markerX, markerY, 2, 2
     
     return minX, minY, minW, minH
 
