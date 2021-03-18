@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import pytesseract
-from googletrans import Translator
 from PyDictionary import PyDictionary
+import TranslatorGUI as GUI
 import re
 
 pi = True
@@ -12,7 +12,6 @@ if pi == True:
     from picamera.array import PiRGBArray
 
 dictionary = PyDictionary()
-#translator = Translator()
 
 # This is where tesseract is installed in my system, and yes I am using windows!
 if pi == False:
@@ -34,6 +33,9 @@ def main():
     y1 = 100
     w = 150
     h = 80
+
+    # GUI object
+    gui = GUI.Translator_GUI()
 
     #while (True):
     for frame in camera.capture_continuous(rawCapture, format='bgr', use_video_port=True):
@@ -65,13 +67,13 @@ def main():
                 translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
                 text = pytesseract.image_to_string(translateFrame)
                 # Replacing every character except english alphabets with space
-                text = re.sub(r'[^A-Za-z+]', '', text)
+                word = re.sub(r'[^A-Za-z+]', '', text)
 
-                if text != '':
-                    print(text)
-                    print(dictionary.meaning(text))
-                    print(dictionary.synonym(text))
-                    #print(translator.translate(data).pronunciation)
+                if word != '':
+                    print(word)
+                    meaning = dictionary.meaning(word)
+                    noun, verb, adj = Extract_Information(meaning)
+                    gui.update(word, noun, verb, adj)
 
         # Display image
         cv2.imshow('frame', frame)
@@ -153,6 +155,20 @@ def Nearest_Contour(image, contours, markerX, markerY):
         minX, minY, minW, minH = markerX, markerY, 2, 2
     
     return minX, minY, minW, minH
+
+def Extract_Information(meaning):
+    Noun, Verb, Adjective = "None", "None", "None"
+    if meaning != None:
+        for key in meaning.keys():
+            if key == "Noun":
+                Noun = '\n'.join(meaning[key])
+            elif key == "Verb":
+                Verb = '\n'.join(meaning[key])
+            elif key == "Adjective":
+                Adjective = '\n'.join(meaning[key])
+
+    return Noun, Verb, Adjective
+
 
 # Call main function
 main()
