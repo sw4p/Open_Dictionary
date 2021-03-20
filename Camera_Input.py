@@ -163,9 +163,9 @@ def Extract_Information(meaning):
             if key == "Noun":
                 Noun = meaning[key][0]#'\n'.join(meaning[key])
             elif key == "Verb":
-                Verb = '\n'.join(meaning[key])
+                Verb = meaning[key][0]#'\n'.join(meaning[key])
             elif key == "Adjective":
-                Adjective = '\n'.join(meaning[key])
+                Adjective = meaning[key][0]#'\n'.join(meaning[key])
 
     return Noun, Verb, Adjective
 
