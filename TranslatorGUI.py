@@ -19,7 +19,7 @@ class Translator_GUI:
         lbl_fixedWord = tk.Label(master=self.frm_word, text="Word:", font=fixedWordFont)
         lbl_fixedWord.grid(row=0, column=0, sticky='W')
 
-        self.lbl_word = tk.Label(master=self.frm_word, text="Getting Started now")
+        self.lbl_word = tk.Label(master=self.frm_word, text="None")
         self.lbl_word.grid(row=0, column=1, sticky='W')
 
         # The frame where meaning(noun) of the word will be displayed
