@@ -1,12 +1,11 @@
 import cv2
-import platform
 
 class ImageSource():
     def __init__(self, source="webCam", cameraIndex=0):
         self.source = source
         if self.source == "webCam":
             self.camera = cv2.VideoCapture(cameraIndex, cv2.CAP_DSHOW)
-        elif self.source == "PiCam":
+        elif self.source == "piCam":
             from picamera import PiCamera
             from picamera.array import PiRGBArray
             
@@ -20,6 +19,7 @@ class ImageSource():
 
     def frame(self):
         if self.source == "piCam":
+            self.rawCapture.truncate(0)
             self.camera.capture(self.rawCapture, format='bgr', use_video_port=True)
             image = self.rawCapture.array
         elif self.source == "webCam":

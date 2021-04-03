@@ -5,14 +5,11 @@ from PyDictionary import PyDictionary
 import TranslatorGUI as GUI
 import Marker
 import Image_Source as imgSrc
+import platform
 import re
 
-pi = True
-
-dictionary = PyDictionary()
-
 # This is where tesseract is installed in my system, and yes I am using windows!
-if pi == False:
+if platform.system() == "Windows":
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def main():
@@ -22,12 +19,11 @@ def main():
     w = 150
     h = 80
 
-    # GUI object
+    # Objects
     gui = GUI.Translator_GUI()
-    # Marker object
     marker = Marker.Marker()
-    # Camera object
-    camera = imgSrc.ImageSource(source="webCam")
+    camera = imgSrc.ImageSource(source="piCam")
+    dictionary = PyDictionary()
 
     while (True):
         # Capture image frame
@@ -67,8 +63,6 @@ def main():
         cv2.imshow('frame', frame)
         #cv2.imshow('cropFrame', cropFrame)
         #cv2.imshow('translateFrame', translateFrame)
-        if pi == True:
-            rawCapture.truncate(0)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
