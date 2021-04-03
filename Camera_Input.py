@@ -4,13 +4,10 @@ import pytesseract
 from PyDictionary import PyDictionary
 import TranslatorGUI as GUI
 import Marker
+import Image_Source as imgSrc
 import re
 
 pi = True
-
-if pi == True:
-    from picamera import PiCamera
-    from picamera.array import PiRGBArray
 
 dictionary = PyDictionary()
 
@@ -19,17 +16,7 @@ if pi == False:
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def main():
-    if pi == True:
-        camera = PiCamera()
-        camera.resolution = (640, 480)
-        camera.framerate = 30
-        camera.vflip = True
-        camera.hflip = True
-        rawCapture = PiRGBArray(camera, size=(640, 480))
-    else:
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-
-    # Box of interest coordinates/
+    # Box of interest coordinates
     x1 = 100
     y1 = 100
     w = 150
@@ -39,14 +26,12 @@ def main():
     gui = GUI.Translator_GUI()
     # Marker object
     marker = Marker.Marker()
+    # Camera object
+    camera = imgSrc.ImageSource(source="webCam")
 
     while (True):
         # Capture image frame
-        if pi == True:
-            camera.capture(rawCapture, format='bgr', use_video_port=True)
-            frame = rawCapture.array
-        else:
-            ret, frame = cap.read()
+        frame = camera.frame()
         
         # Identify maker position from the image
         cX, cY = marker.colour(frame, [0,-10], displayMask=False)
@@ -89,9 +74,7 @@ def main():
             break
 
     # Release camera and destroy everything
-    if pi == False:
-        cap.release()
-    
+    camera.releaseSource()    
     cv2.destroyAllWindows()
     
 def Detect_Text_Blob(image):
