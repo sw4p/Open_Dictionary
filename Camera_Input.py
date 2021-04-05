@@ -30,34 +30,35 @@ def main():
         frame = camera.frame()
         
         # Identify maker position from the image
-        cX, cY = marker.colour(frame, [0,-10], displayMask=False)
-        if cX != -1:
-            # Draw white dot at the center of the marker
-            cv2.circle(frame, (cX, cY), 2, (255, 255, 255), -1)
+        marker.finger(frame)
+        # cX, cY = marker.colour(frame, [0,-10], displayMask=False)
+        # if cX != -1:
+        #     # Draw white dot at the center of the marker
+        #     cv2.circle(frame, (cX, cY), 2, (255, 255, 255), -1)
 
-            startPoint = (int(cX-w/2), cY-h)
-            endPoint = (int(cX+w/2), cY)
-            cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 1)
-            # Crop image around area of interest
-            cropFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
-            if cropFrame.any():
-                # Detect words in the cropped image
-                contours = Detect_Text_Blob(cropFrame)
-                # Find nearest word to the marker
-                minX, minY, minW, minH = Nearest_Contour(cropFrame, contours, cX, cY)
-                # Bound the nearest word in a red rectangle
-                cv2.rectangle(cropFrame, (minX, minY), (minX+minW, minY+minH), (0, 0, 255), 1)
-                # Identify text from the red rectangle, ideally it should be only one word
-                translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
-                text = pytesseract.image_to_string(translateFrame)
-                # Replacing every character except english alphabets with space
-                word = re.sub(r'[^A-Za-z+]', '', text)
+        #     startPoint = (int(cX-w/2), cY-h)
+        #     endPoint = (int(cX+w/2), cY)
+        #     cv2.rectangle(frame, startPoint, endPoint, (0,255,0), 1)
+        #     # Crop image around area of interest
+        #     cropFrame = frame[startPoint[1]:endPoint[1], startPoint[0]:endPoint[0]]
+        #     if cropFrame.any():
+        #         # Detect words in the cropped image
+        #         contours = Detect_Text_Blob(cropFrame)
+        #         # Find nearest word to the marker
+        #         minX, minY, minW, minH = Nearest_Contour(cropFrame, contours, cX, cY)
+        #         # Bound the nearest word in a red rectangle
+        #         cv2.rectangle(cropFrame, (minX, minY), (minX+minW, minY+minH), (0, 0, 255), 1)
+        #         # Identify text from the red rectangle, ideally it should be only one word
+        #         translateFrame = cropFrame[minY:minY+minH, minX:minX+minW]
+        #         text = pytesseract.image_to_string(translateFrame)
+        #         # Replacing every character except english alphabets with space
+        #         word = re.sub(r'[^A-Za-z+]', '', text)
 
-                if word != '':
-                    print(word)
-                    meaning = dictionary.meaning(word)
-                    noun, verb, adj = Extract_Information(meaning)
-                    gui.update(word, noun, verb, adj)
+        #         if word != '':
+        #             print(word)
+        #             meaning = dictionary.meaning(word)
+        #             noun, verb, adj = Extract_Information(meaning)
+        #             gui.update(word, noun, verb, adj)
 
         # Display image
         cv2.imshow('frame', frame)

@@ -1,7 +1,13 @@
 import cv2
+import mediapipe as mp
 import numpy as np
 
 class Marker:
+    def __init__(self):
+        self.mpHands = mp.solutions.hands
+        self.hands = self.mpHands.Hands()
+        self.mpDraw = mp.solutions.drawing_utils
+
     def colour(self, image, offsets=[0,0], displayMask=False):
         # Conver BGR to HSV
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -27,8 +33,14 @@ class Marker:
 
         return cX, cY
 
-    def finger(self, image, offsets=[0,0], displayMask=False):
-        pass
+    def finger(self, image, offsets=[0,0]):
+        imageRGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = self.hands.process(imageRGB)
+        if results.multi_hand_landmarks:
+            for handLms in results.multi_hand_landmarks:
+                self.mpDraw.draw_landmarks(image, handLms)
+
+        cv2.imshow("finger", image)
 
     def Identify_Colour(self, image, colourBoundry):
         lower = np.array(colourBoundry[0], dtype="uint8")
