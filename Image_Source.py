@@ -27,7 +27,7 @@ class ImageSource():
 
         return image
 
-    def releaseSource(self):
+    def release_source(self):
         if self.source == "webCam":
             self.camera.release()
 

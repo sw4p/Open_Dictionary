@@ -8,9 +8,9 @@ class Marker:
         # Detect red colour. Red colour has two range in HSV, 0-30 and 150-180.
         # here we are detecting only extreme red i.e. 0-10 and 170-180.
         colourBoundry = ([0, 120, 70], [10, 255, 255]) #HSV
-        mask1 = self.Identify_Colour(image, colourBoundry)
+        mask1 = self.identify_colour(image, colourBoundry)
         colourBoundry = ([170, 120, 70], [180, 255, 255]) #HSV
-        mask2 = self.Identify_Colour(image, colourBoundry)
+        mask2 = self.identify_colour(image, colourBoundry)
         # ORing the masks
         mask1 = mask1 + mask2
         # Display mask
@@ -30,7 +30,7 @@ class Marker:
     def finger(self, image, offsets=[0,0], displayMask=False):
         pass
 
-    def Identify_Colour(self, image, colourBoundry):
+    def identify_colour(self, image, colourBoundry):
         lower = np.array(colourBoundry[0], dtype="uint8")
         upper = np.array(colourBoundry[1], dtype="uint8")
         mask = cv2.inRange(image, lower, upper)
